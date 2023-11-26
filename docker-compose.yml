@@ -1,0 +1,61 @@
+version: '3'
+
+services:
+  webapp:
+    build:
+      context: ./web
+    ports:
+      - "8000:8000"
+    networks:
+      - web_network
+      - redis_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 100M
+
+  workerapp:
+    build:
+      context: ./worker
+    ports:
+      - "9000:9000"
+    networks:
+      - web_network
+      - redis_network
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 100M
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/adlin.tiger.org.crt:/etc/nginx/adlin.tiger.org.crt:ro
+      - ./nginx/adlin.tiger.org.key:/etc/nginx/adlin.tiger.org.key:ro
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - web_network
+      - redis_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:latest
+    volumes:
+      - redis_data:/data
+    networks:
+      - redis_network
+    restart: unless-stopped
+
+networks:
+  web_network:
+  redis_network:
+
+volumes:
+  redis_data:
